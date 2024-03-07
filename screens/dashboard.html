@@ -1,0 +1,49 @@
+<div class="sidebyside">
+<div class="flexvert card" style="width: 28%;">
+	<div class="sectionheader">
+		Inside
+	</div>
+	<span style="font-size:128pt">
+		<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:RpiTempHum1.Temperature" data-format="%.0f F"></div>
+	</span>
+
+	<span style="font-size:128pt">
+		<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:RpiTempHum1.Humidity" data-format="%.0f F"></div>
+	</span>
+</div>
+
+<div class="flexvert card" style="width: 28%;">
+	<div class="sectionheader">
+		Outside
+	</div>
+
+	<span style="font-size:128pt">
+	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:Shed.Temp2" data-format="%.0f F"></div>
+	</span>
+
+	<span style="font-size:128pt">
+	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:Shed.RH2" data-format="%.0f %%"></div>
+	</span>
+</div>
+
+<div class="flexvert card" style="width: 37%;">
+	<div class="sectionheader">
+		Garage
+	</div>
+
+	<span style="font-size:128pt">
+	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:garage.Temp" data-format="%.0f F"></div>
+	</span>
+
+	<span style="font-size:128pt">
+	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:garage.Pressure_InHG" data-format="%.2f inHg"></div>
+	<select class="autoload_value multistate_indicator" data-target="GaragePLC/Program:garage.HMI_Pressure_Status" value="0" style="font-size:48">
+		<option value="0"></option>
+		<option value="1" class="warn">&#x2191;</option>
+		<option value="2" class="warn">&#x2193;</option>
+	</select></div>
+	</span>
+
+</div>
+
+</div>
