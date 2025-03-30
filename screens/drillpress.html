@@ -138,18 +138,29 @@ function setDrillSpeed() {
     const rpm = document.getElementById("resultSpeed").value;
     if (rpm) {
         // Update the drill press speed setpoint with calculated value
-        // Using the same target as the existing 100rpm button
         const numRpm = parseInt(rpm);
         // Limit to practical range if needed
         const limitedRpm = Math.min(Math.max(numRpm, 100), 3000);
         
-        // Set the value using the same mechanism as other buttons
-        // Assuming you have a mechanism to set GaragePLC/Program:Drillpress.hmi_SpeedSP
-        document.querySelector('input[data-target="GaragePLC/Program:Drillpress.hmi_SpeedSP"]').value = limitedRpm;
+        // Get the input element once and store in variable
+        const speedInput = document.querySelector('input[data-target="GaragePLC/Program:Drillpress.hmi_SpeedSP"]');
         
-        // If there's an event needed to trigger the update:
-        const event = new Event('change');
-        document.querySelector('input[data-target="GaragePLC/Program:Drillpress.hmi_SpeedSP"]').dispatchEvent(event);
+        // Set the value
+        speedInput.value = limitedRpm;
+        
+        // Trigger change event
+        const changeEvent = new Event('change');
+        speedInput.dispatchEvent(changeEvent);
+        
+        // Simulate pressing Enter key
+        const enterEvent = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true
+        });
+        speedInput.dispatchEvent(enterEvent);
     }
 }
 </script>
