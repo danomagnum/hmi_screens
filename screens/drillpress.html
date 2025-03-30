@@ -1,0 +1,406 @@
+{% include 'nav.html'%}
+{% include 'analog_widgets.html'%}
+<div class="sidebyside">
+<div class="flexvert card" style="width: 20%;">
+	<div class="sectionheader">
+		Speed
+	</div>
+	<canvas class="autoload_value graph" 
+		data-target="GaragePLC/Program:Drillpress.sts_ActualSpeed" 
+		data-pencolor="#FF0000"
+		data-min="0" 
+		data-max="100" 
+		width=200 
+		height=200>
+	</canvas>
+	<div class="autoload_value" data-target="GaragePLC/Program:Drillpress.sts_ActualSpeed"></div>
+</div>
+
+
+<div class="flexvert card" style="width: 20%;">
+	<div class="sectionheader">
+		Status
+	</div>
+	<span>Direction:</span>
+	<select class="autoload_value multistate_indicator" data-target="GaragePLC/Program:Drillpress.ind_direction" value="0">
+		<option value="0">Standby</option>
+		<option value="10" class="ok">Running</option>
+		<option value="20" class="warn">Restart Delay</option>
+	</select>
+
+	<span>Drive Status:</span>
+	<select class="autoload_value multistate_indicator" data-target="GaragePLC/Program:Drillpress.ind_status" value="0">
+		<option value="0" class="warn">Not Ready</option>
+		<option value="1" class="ok">Ready</option>
+		<option value="2" class="warn">Faulted</option>
+		<option value="3" >Accelerating</option>
+		<option value="4" >Decelerating</option>
+		<option value="5" class="ok">At Speed</option>
+	</select>
+	<span class="label">Speed SP</span>
+	<input type="number" class="autoload_value" data-target="GaragePLC/Program:Drillpress.hmi_SpeedSP", value=0>
+</div>
+
+
+<div class="card" style="width: 60%; margin: 20px auto; padding: 15px;">
+    <div class="sectionheader">
+        Drill Speed Calculator
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px;">
+        <div style="flex: 1; min-width: 150px;">
+            <label for="bitSize">Bit Size:</label>
+            <select id="bitSize" class="form-control" onchange="updateDrillSpeed()">
+                <option value="">Select Size</option>
+                <option value="1/16">1/16" - 1.6mm</option>
+                <option value="3/32">3/32" - 2.4mm</option>
+                <option value="1/8">1/8" - 3mm</option>
+                <option value="5/32">5/32" - 4mm</option>
+                <option value="3/16">3/16" - 4.8mm</option>
+                <option value="7/32">7/32" - 5.5mm</option>
+                <option value="1/4">1/4" - 6mm</option>
+                <option value="9/32">9/32" - 7mm</option>
+                <option value="5/16">5/16" - 8mm</option>
+                <option value="11/32">11/32" - 8.5mm</option>
+                <option value="3/8">3/8" - 10mm</option>
+                <option value="13/32">13/32" - 10.5mm</option>
+                <option value="7/16">7/16" - 11mm</option>
+                <option value="15/32">15/32" - 12mm</option>
+                <option value="1/2">1/2" - 13mm</option>
+                <option value="9/16">9/16" - 14mm</option>
+                <option value="5/8">5/8" - 16mm</option>
+                <option value="11/16">11/16" - 17.5mm</option>
+                <option value="3/4">3/4" - 19mm</option>
+                <option value="13/16">13/16" - 21mm</option>
+                <option value="7/8">7/8" - 22mm</option>
+                <option value="15/16">15/16" - 24mm</option>
+                <option value="1">1" - 25mm</option>
+                <option value="1-1/8">1-1/8" - 28.5mm</option>
+                <option value="1-1/4">1-1/4" - 32mm</option>
+                <option value="1-3/8">1-3/8" - 35mm</option>
+                <option value="1-1/2">1-1/2" - 38mm</option>
+            </select>
+        </div>
+        <div style="flex: 1; min-width: 150px;">
+            <label for="material">Material:</label>
+            <select id="material" class="form-control" onchange="updateDrillSpeed()">
+                <option value="">Select Material</option>
+                <option value="wood">Wood</option>
+                <option value="plastic">Plastic</option>
+                <option value="aluminum">Aluminum</option>
+                <option value="brass">Brass/Bronze</option>
+                <option value="steel">Steel-Mild</option>
+                <option value="iron">Iron-Cast(soft)</option>
+                <option value="stainless">Stainless Steel</option>
+            </select>
+        </div>
+        <div style="flex: 1; min-width: 150px;">
+            <label for="speedType">Speed Range:</label>
+            <select id="speedType" class="form-control" onchange="updateDrillSpeed()">
+                <option value="">Select Type</option>
+                <option value="min">Minimum</option>
+                <option value="max">Maximum</option>
+                <option value="avg">Average</option>
+            </select>
+        </div>
+    </div>
+    <div style="margin-top: 15px;">
+        <label for="resultSpeed">Recommended Speed (RPM):</label>
+        <input type="text" id="resultSpeed" class="form-control" readonly>
+    </div>
+    <button class="pb_momentary" style="margin-top: 15px;" id="setSpeedBtn" onclick="setDrillSpeed()" disabled>Set This Speed</button>
+</div>
+
+<script>
+// Drill speed data from table
+const drillSpeedData = {
+    "1/16": {
+        "wood": [16800, 21280],
+        "plastic": [5600, 11200],
+        "aluminum": [11200, 14000],
+        "brass": [8400, 14000],
+        "steel": [4480, 5320],
+        "iron": [4200, 5600],
+        "stainless": [1680, 3640]
+    },
+    "3/32": {
+        "wood": [11200, 14187],
+        "plastic": [3733, 7467],
+        "aluminum": [7467, 9333],
+        "brass": [5600, 9333],
+        "steel": [2987, 3547],
+        "iron": [2800, 3733],
+        "stainless": [1120, 2427]
+    },
+    "1/8": {
+        "wood": [8400, 10640],
+        "plastic": [2800, 5600],
+        "aluminum": [5600, 7000],
+        "brass": [4200, 7000],
+        "steel": [2240, 2660],
+        "iron": [2100, 2800],
+        "stainless": [840, 1820]
+    },
+    "5/32": {
+        "wood": [6720, 8512],
+        "plastic": [2240, 4480],
+        "aluminum": [4480, 5600],
+        "brass": [3360, 5600],
+        "steel": [1792, 2128],
+        "iron": [1680, 2240],
+        "stainless": [672, 1456]
+    },
+    "3/16": {
+        "wood": [5600, 7093],
+        "plastic": [1867, 3733],
+        "aluminum": [3733, 4667],
+        "brass": [2800, 4667],
+        "steel": [1493, 1773],
+        "iron": [1400, 1867],
+        "stainless": [560, 1213]
+    },
+    "7/32": {
+        "wood": [4800, 6080],
+        "plastic": [1600, 3200],
+        "aluminum": [3200, 4000],
+        "brass": [2400, 4000],
+        "steel": [1280, 1520],
+        "iron": [1200, 1600],
+        "stainless": [480, 1040]
+    },
+    "1/4": {
+        "wood": [4200, 5320],
+        "plastic": [1400, 2800],
+        "aluminum": [2800, 3500],
+        "brass": [2100, 3500],
+        "steel": [1120, 1330],
+        "iron": [1050, 1400],
+        "stainless": [420, 910]
+    },
+    "9/32": {
+        "wood": [3733, 4729],
+        "plastic": [1244, 2489],
+        "aluminum": [2489, 3111],
+        "brass": [1867, 3111],
+        "steel": [996, 1182],
+        "iron": [933, 1244],
+        "stainless": [373, 809]
+    },
+    "5/16": {
+        "wood": [3360, 4256],
+        "plastic": [1120, 2240],
+        "aluminum": [2240, 2800],
+        "brass": [1680, 2800],
+        "steel": [896, 1064],
+        "iron": [840, 1120],
+        "stainless": [336, 728]
+    },
+    "11/32": {
+        "wood": [3055, 3869],
+        "plastic": [1018, 2036],
+        "aluminum": [2036, 2545],
+        "brass": [1527, 2545],
+        "steel": [815, 967],
+        "iron": [764, 1018],
+        "stainless": [305, 662]
+    },
+    "3/8": {
+        "wood": [2800, 3547],
+        "plastic": [933, 1867],
+        "aluminum": [1867, 2333],
+        "brass": [1400, 2333],
+        "steel": [747, 887],
+        "iron": [700, 933],
+        "stainless": [280, 607]
+    },
+    "13/32": {
+        "wood": [2585, 3274],
+        "plastic": [862, 1723],
+        "aluminum": [1723, 2154],
+        "brass": [1292, 2154],
+        "steel": [689, 818],
+        "iron": [646, 862],
+        "stainless": [258, 560]
+    },
+    "7/16": {
+        "wood": [2400, 3040],
+        "plastic": [800, 1600],
+        "aluminum": [1600, 2000],
+        "brass": [1200, 2000],
+        "steel": [640, 760],
+        "iron": [600, 800],
+        "stainless": [240, 520]
+    },
+    "15/32": {
+        "wood": [2240, 2837],
+        "plastic": [747, 1493],
+        "aluminum": [1493, 1867],
+        "brass": [1120, 1867],
+        "steel": [597, 709],
+        "iron": [560, 747],
+        "stainless": [224, 485]
+    },
+    "1/2": {
+        "wood": [2100, 2660],
+        "plastic": [700, 1400],
+        "aluminum": [1400, 1750],
+        "brass": [1050, 1750],
+        "steel": [560, 665],
+        "iron": [525, 700],
+        "stainless": [210, 455]
+    },
+    "9/16": {
+        "wood": [1867, 2364],
+        "plastic": [622, 1244],
+        "aluminum": [1244, 1556],
+        "brass": [933, 1556],
+        "steel": [498, 591],
+        "iron": [467, 622],
+        "stainless": [187, 404]
+    },
+    "5/8": {
+        "wood": [1680, 2128],
+        "plastic": [560, 1120],
+        "aluminum": [1120, 1400],
+        "brass": [840, 1400],
+        "steel": [448, 532],
+        "iron": [420, 560],
+        "stainless": [168, 364]
+    },
+    "11/16": {
+        "wood": [1527, 1935],
+        "plastic": [509, 1018],
+        "aluminum": [1018, 1273],
+        "brass": [764, 1273],
+        "steel": [407, 484],
+        "iron": [382, 509],
+        "stainless": [153, 331]
+    },
+    "3/4": {
+        "wood": [1400, 1773],
+        "plastic": [467, 933],
+        "aluminum": [933, 1167],
+        "brass": [700, 1167],
+        "steel": [373, 443],
+        "iron": [350, 467],
+        "stainless": [140, 303]
+    },
+    "13/16": {
+        "wood": [1292, 1637],
+        "plastic": [431, 862],
+        "aluminum": [862, 1077],
+        "brass": [646, 1077],
+        "steel": [345, 409],
+        "iron": [323, 431],
+        "stainless": [129, 280]
+    },
+    "7/8": {
+        "wood": [1200, 1520],
+        "plastic": [400, 800],
+        "aluminum": [800, 1000],
+        "brass": [600, 1000],
+        "steel": [320, 380],
+        "iron": [300, 400],
+        "stainless": [120, 260]
+    },
+    "15/16": {
+        "wood": [1120, 1419],
+        "plastic": [373, 747],
+        "aluminum": [747, 933],
+        "brass": [560, 933],
+        "steel": [299, 355],
+        "iron": [280, 373],
+        "stainless": [112, 243]
+    },
+    "1": {
+        "wood": [1050, 1330],
+        "plastic": [350, 700],
+        "aluminum": [700, 875],
+        "brass": [525, 875],
+        "steel": [280, 333],
+        "iron": [263, 350],
+        "stainless": [105, 228]
+    },
+    "1-1/8": {
+        "wood": [933, 1182],
+        "plastic": [311, 622],
+        "aluminum": [622, 778],
+        "brass": [467, 778],
+        "steel": [249, 296],
+        "iron": [233, 311],
+        "stainless": [93, 202]
+    },
+    "1-1/4": {
+        "wood": [840, 1064],
+        "plastic": [280, 560],
+        "aluminum": [560, 700],
+        "brass": [420, 700],
+        "steel": [224, 266],
+        "iron": [210, 280],
+        "stainless": [84, 182]
+    },
+    "1-3/8": {
+        "wood": [764, 967],
+        "plastic": [255, 509],
+        "aluminum": [509, 636],
+        "brass": [382, 636],
+        "steel": [204, 242],
+        "iron": [191, 255],
+        "stainless": [76, 165]
+    },
+    "1-1/2": {
+        "wood": [700, 887],
+        "plastic": [233, 467],
+        "aluminum": [467, 583],
+        "brass": [350, 583],
+        "steel": [187, 222],
+        "iron": [175, 233],
+        "stainless": [70, 152]
+    }
+};
+
+function updateDrillSpeed() {
+    const bitSize = document.getElementById("bitSize").value;
+    const material = document.getElementById("material").value;
+    const speedType = document.getElementById("speedType").value;
+    const resultField = document.getElementById("resultSpeed");
+    const setSpeedBtn = document.getElementById("setSpeedBtn");
+    
+    resultField.value = "";
+    setSpeedBtn.disabled = true;
+    
+    if (bitSize && material && speedType && drillSpeedData[bitSize] && drillSpeedData[bitSize][material]) {
+        const range = drillSpeedData[bitSize][material];
+        let result = 0;
+        
+        if (speedType === "min") {
+            result = range[0];
+        } else if (speedType === "max") {
+            result = range[1];
+        } else if (speedType === "avg") {
+            result = Math.round((range[0] + range[1]) / 2);
+        }
+        
+        resultField.value = result;
+        setSpeedBtn.disabled = false;
+    }
+}
+
+function setDrillSpeed() {
+    const rpm = document.getElementById("resultSpeed").value;
+    if (rpm) {
+        // Update the drill press speed setpoint with calculated value
+        // Using the same target as the existing 100rpm button
+        const numRpm = parseInt(rpm);
+        // Limit to practical range if needed
+        const limitedRpm = Math.min(Math.max(numRpm, 100), 3000);
+        
+        // Set the value using the same mechanism as other buttons
+        // Assuming you have a mechanism to set GaragePLC/Program:Drillpress.hmi_SpeedSP
+        document.querySelector('input[data-target="GaragePLC/Program:Drillpress.hmi_SpeedSP"]').value = limitedRpm;
+        
+        // If there's an event needed to trigger the update:
+        const event = new Event('change');
+        document.querySelector('input[data-target="GaragePLC/Program:Drillpress.hmi_SpeedSP"]').dispatchEvent(event);
+    }
+}
+</script>
