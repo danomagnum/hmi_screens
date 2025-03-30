@@ -147,20 +147,8 @@ function setDrillSpeed() {
         
         // Set the value
         speedInput.value = limitedRpm;
-        
-        // Trigger change event
-        const changeEvent = new Event('change');
-        speedInput.dispatchEvent(changeEvent);
-        
-        // Simulate pressing Enter key
-        const enterEvent = new KeyboardEvent('keydown', {
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13,
-            which: 13,
-            bubbles: true
-        });
-        speedInput.dispatchEvent(enterEvent);
+		input_submit(speedInput);
+
     }
 }
 </script>
