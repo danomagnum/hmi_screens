@@ -9,7 +9,7 @@
 		data-target="GaragePLC/Program:Drillpress.sts_ActualSpeed" 
 		data-pencolor="#FF0000"
 		data-min="0" 
-		data-max="100" 
+		data-max="3000" 
 		width=200 
 		height=200>
 	</canvas>
@@ -37,6 +37,34 @@
 		<option value="4" >Decelerating</option>
 		<option value="5" class="ok">At Speed</option>
 	</select>
+
+	<span>Fault Code:</span>
+	<select class="autoload_value multistate_indicator" data-target="GaragePLC/Program:Drillpress.ind_Fault" value="0">
+		<option value="0" class="ok">No Fault</option>
+		<option value="2" class="warn">F2 - Auxiliary Input</option>
+		<option value="3" class="warn">F3 - Power Loss</option>
+		<option value="4" class="warn">F4 - Under Voltage</option>
+		<option value="5" class="warn">F5 - Over Voltage</option>
+		<option value="6" class="warn">F6 - Motor Stalled</option>
+		<option value="7" class="warn">F7 - Motor Overload</option>
+		<option value="8" class="warn">F8 - Heatsink Over Temperature</option>
+		<option value="12" class="warn">F12 - Hardware Over Current</option>
+		<option value="13" class="warn">F13 - Ground Fault</option>
+		<option value="33" class="warn">F33 - Auto Restart Attempts</option>
+		<option value="38" class="warn">F38 - Phase U to Ground</option>
+		<option value="39" class="warn">F39 - Phase V to Ground</option>
+		<option value="40" class="warn">F40 - Phase W to Ground</option>
+		<option value="48" class="warn">F48 - Parameters Defaulted</option>
+		<option value="63" class="warn">F63 - Software Over Current</option>
+		<option value="64" class="warn">F64 - Drive Overload</option>
+		<option value="70" class="warn">F70 - Power Unit Failure</option>
+		<option value="73" class="warn">F73 - Enet Comms Loss</option>
+		<option value="100" class="warn">F100 - Parameter Checksum Error</option>
+		<option value="122" class="warn">F122 - I/O Board Failure</option>
+	</select>
+
+	<button class="pb_momentary" data-target="GaragePLC/Program:Drillpress.hmi_FaultReset" data-press="1" data-release="0">Reset Fault</button>
+
 	<span class="label">Speed SP</span>
 	<input type="number" class="autoload_value" data-target="GaragePLC/Program:Drillpress.hmi_SpeedSP", value=0>
 </div>
