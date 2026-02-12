@@ -56,16 +56,23 @@
 	</span>
 
 	<span style="font-size:128pt">
-	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:AccuRite.InData.Humidity" data-format="%.2f %"></div>
-	</span>
-
-	<span style="font-size:128pt">
-	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:AccuRite.InData.WindDir" data-format="%.2f deg"></div>
+	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:AccuRite.InData.Humidity" data-format="%.2f %%"></div>
 	</span>
 
 	<span style="font-size:128pt">
 	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:AccuRite.InData.WindSpeed" data-format="%.2f mph"></div>
 	</span>
+
+	<select class="autoload_value multistate_indicator" data-target="GaragePLC/Program:AccuRite.WindDir" value="0" style="font-size:48">
+		<option value="0">South</option>
+		<option value="1">SouthWest</option>
+		<option value="2">West</option>
+		<option value="3">NorthWest</option>
+		<option value="4">North</option>
+		<option value="5">NorthEast</option>
+		<option value="6">East</option>
+		<option value="7">SouthEast</option>
+	</select>
 
 	<span style="font-size:128pt">
 	<div class="autoload_value" style="display:inline"  data-target="GaragePLC/Program:AccuRite.RainDelta" data-format="%.2f in"></div>
