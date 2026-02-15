@@ -34,6 +34,23 @@
 	</select></div>
 
 </div>
+<div class=""flexvert card" style="width: 30%;">
+	<div class="sectionheader">
+		Trends
+	</div>
+	<br>
+	Temp:
+	<canvas class="autoload_value graph" data-target="GaragePLC/Program:AccuRite.InData.Temp" data-pencolor="#FF0000" width=100% height=200 data-min="-10", data-max="105"></canvas>
+	<br>
+	Pressure:
+	<canvas class="autoload_value graph" data-target="GaragePLC/Program:garage.Pressure_InHG" data-pencolor="#FF0000" width=100% height=200 data-min="26", data-max="32"></canvas>
+	<br>
+	Humidity:
+	<canvas class="autoload_value graph" data-target="GaragePLC/Program:AccuRite.InData.Humidity" data-pencolor="#FF0000" width=100% height=200 data-min="0", data-max="100"></canvas>
+	<br>
+	Wind:
+	<canvas class="autoload_value graph" data-target="GaragePLC/Program:AccuRite.InData.WindSpeed" data-pencolor="#FF0000" width=100% height=200 data-min="0", data-max="10"></canvas>
+</div>"
 
 <div class="flexvert card" style="width: 37%;float:right;">
 	<div class="sectionheader">
