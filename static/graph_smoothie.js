@@ -6,15 +6,33 @@
     return parseFloat(value);
   }
 
-  function getCanvasWidth(canvas) {
-    if (canvas.width && canvas.width > 0) {
-      return canvas.width;
-    }
+  function getCanvasRect(canvas) {
     var rect = canvas.getBoundingClientRect();
-    if (rect && rect.width > 0) {
-      return Math.round(rect.width);
+    if (!rect || rect.width <= 0 || rect.height <= 0) {
+      return { width: 300, height: 150 };
     }
-    return 300;
+    return { width: rect.width, height: rect.height };
+  }
+
+  function computeMillisPerPixel(secs, cssWidth) {
+    var safeWidth = cssWidth > 0 ? cssWidth : 300;
+    return Math.max(1, Math.round((secs * 1000) / safeWidth));
+  }
+
+  function resizeCanvasForDpr(element) {
+    var rect = getCanvasRect(element);
+    var dpr = window.devicePixelRatio || 1;
+    var width = Math.round(rect.width * dpr);
+    var height = Math.round(rect.height * dpr);
+
+    if (element.width !== width || element.height !== height) {
+      element.width = width;
+      element.height = height;
+      element.style.width = Math.round(rect.width) + "px";
+      element.style.height = Math.round(rect.height) + "px";
+    }
+
+    return rect;
   }
 
   function initGraph(element) {
@@ -36,8 +54,8 @@
     var minValue = parseNumber(element.getAttribute("data-min"));
     var maxValue = parseNumber(element.getAttribute("data-max"));
 
-    var canvasWidth = getCanvasWidth(element);
-    var millisPerPixel = Math.max(1, Math.round((secs * 1000) / canvasWidth));
+    var rect = resizeCanvasForDpr(element);
+    var millisPerPixel = computeMillisPerPixel(secs, rect.width);
 
     var chart = new SmoothieChart({
       millisPerPixel: millisPerPixel,
@@ -64,7 +82,7 @@
     chart.addTimeSeries(series, { strokeStyle: pencolor, lineWidth: 2 });
     chart.streamTo(element, 500);
 
-    element._smoothieState = { chart: chart, series: series };
+    element._smoothieState = { chart: chart, series: series, secs: secs };
 
     var initialValue = parseFloat(element.textContent);
     if (isFinite(initialValue)) {
@@ -100,8 +118,27 @@
     });
   }
 
+  function resizeGraph(element) {
+    var state = element._smoothieState;
+    if (!state) {
+      return;
+    }
+
+    var rect = resizeCanvasForDpr(element);
+    state.chart.options.millisPerPixel = computeMillisPerPixel(state.secs, rect.width);
+  }
+
+  function resizeAllGraphs() {
+    var elements = document.getElementsByClassName("graph");
+    Array.prototype.forEach.call(elements, resizeGraph);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     var elements = document.getElementsByClassName("graph");
     Array.prototype.forEach.call(elements, watchGraph);
+  });
+
+  window.addEventListener("resize", function () {
+    resizeAllGraphs();
   });
 })();
