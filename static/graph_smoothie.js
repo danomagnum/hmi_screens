@@ -19,6 +19,11 @@
     return Math.max(1, Math.round((secs * 1000) / safeWidth));
   }
 
+  function computeMaxDataSetLength(cssWidth) {
+    var safeWidth = cssWidth > 0 ? cssWidth : 300;
+    return Math.max(2, Math.ceil(safeWidth * 1.1));
+  }
+
   function resizeCanvasForDpr(element) {
     var rect = getCanvasRect(element);
     var dpr = window.devicePixelRatio || 1;
@@ -56,6 +61,7 @@
 
     var rect = resizeCanvasForDpr(element);
     var millisPerPixel = computeMillisPerPixel(secs, rect.width);
+    var maxDataSetLength = computeMaxDataSetLength(rect.width);
 
     var chart = new SmoothieChart({
       millisPerPixel: millisPerPixel,
@@ -68,7 +74,8 @@
       },
       labels: {
         fillStyle: "#000000"
-      }
+      },
+      maxDataSetLength: maxDataSetLength
     });
 
     if (isFinite(minValue)) {
@@ -82,7 +89,12 @@
     chart.addTimeSeries(series, { strokeStyle: pencolor, lineWidth: 2 });
     chart.streamTo(element, 500);
 
-    element._smoothieState = { chart: chart, series: series, secs: secs };
+    element._smoothieState = {
+      chart: chart,
+      series: series,
+      secs: secs,
+      maxDataSetLength: maxDataSetLength
+    };
 
     var initialValue = parseFloat(element.textContent);
     if (isFinite(initialValue)) {
@@ -102,6 +114,19 @@
     }
 
     state.series.append(Date.now(), val);
+    trimSeriesToMax(state);
+  }
+
+  function trimSeriesToMax(state) {
+    var maxLength = state.maxDataSetLength;
+    if (!maxLength || !state.series || !state.series.data) {
+      return;
+    }
+
+    var data = state.series.data;
+    if (data.length > maxLength) {
+      data.splice(0, data.length - maxLength);
+    }
   }
 
   function watchGraph(element) {
@@ -126,6 +151,9 @@
 
     var rect = resizeCanvasForDpr(element);
     state.chart.options.millisPerPixel = computeMillisPerPixel(state.secs, rect.width);
+    state.maxDataSetLength = computeMaxDataSetLength(rect.width);
+    state.chart.options.maxDataSetLength = state.maxDataSetLength;
+    trimSeriesToMax(state);
   }
 
   function resizeAllGraphs() {
