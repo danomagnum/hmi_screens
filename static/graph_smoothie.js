@@ -19,9 +19,10 @@
     return Math.max(1, Math.round((secs * 1000) / safeWidth));
   }
 
-  function computeMaxDataSetLength(cssWidth) {
-    var safeWidth = cssWidth > 0 ? cssWidth : 300;
-    return Math.max(2, Math.ceil(safeWidth * 1.1));
+  function computeMaxDataSetLength(secs, millisPerPixel) {
+    var safeMillisPerPixel = millisPerPixel > 0 ? millisPerPixel : 20;
+    var pointsInWindow = Math.ceil((secs * 1000) / safeMillisPerPixel);
+    return Math.max(2, Math.ceil(pointsInWindow * 1.1));
   }
 
   function resizeCanvasForDpr(element) {
@@ -61,7 +62,7 @@
 
     var rect = resizeCanvasForDpr(element);
     var millisPerPixel = computeMillisPerPixel(secs, rect.width);
-    var maxDataSetLength = computeMaxDataSetLength(rect.width);
+    var maxDataSetLength = computeMaxDataSetLength(secs, millisPerPixel);
 
     var chart = new SmoothieChart({
       millisPerPixel: millisPerPixel,
@@ -126,6 +127,7 @@
     var data = state.series.data;
     if (data.length > maxLength) {
       data.splice(0, data.length - maxLength);
+      state.series.resetBounds();
     }
   }
 
@@ -151,7 +153,7 @@
 
     var rect = resizeCanvasForDpr(element);
     state.chart.options.millisPerPixel = computeMillisPerPixel(state.secs, rect.width);
-    state.maxDataSetLength = computeMaxDataSetLength(rect.width);
+    state.maxDataSetLength = computeMaxDataSetLength(state.secs, state.chart.options.millisPerPixel);
     state.chart.options.maxDataSetLength = state.maxDataSetLength;
     trimSeriesToMax(state);
   }
