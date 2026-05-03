@@ -19,10 +19,8 @@
     return Math.max(1, Math.round((secs * 1000) / safeWidth));
   }
 
-  function computeMaxDataSetLength(secs, millisPerPixel) {
-    var safeMillisPerPixel = millisPerPixel > 0 ? millisPerPixel : 20;
-    var pointsInWindow = Math.ceil((secs * 1000) / safeMillisPerPixel);
-    return Math.max(2, Math.ceil(pointsInWindow * 1.1));
+  function computeMaxAge(secs) {
+    return Math.ceil(secs * 1.1 * 1000);
   }
 
   function resizeCanvasForDpr(element) {
@@ -62,7 +60,6 @@
 
     var rect = resizeCanvasForDpr(element);
     var millisPerPixel = computeMillisPerPixel(secs, rect.width);
-    var maxDataSetLength = computeMaxDataSetLength(secs, millisPerPixel);
 
     var chart = new SmoothieChart({
       millisPerPixel: millisPerPixel,
@@ -75,8 +72,7 @@
       },
       labels: {
         fillStyle: "#000000"
-      },
-      maxDataSetLength: maxDataSetLength
+      }
     });
 
     if (isFinite(minValue)) {
@@ -94,7 +90,7 @@
       chart: chart,
       series: series,
       secs: secs,
-      maxDataSetLength: maxDataSetLength
+      maxAge: computeMaxAge(secs)
     };
 
     var initialValue = parseFloat(element.textContent);
@@ -115,19 +111,23 @@
     }
 
     state.series.append(Date.now(), val);
-    trimSeriesToMax(state);
+    trimOldData(state);
   }
 
-  function trimSeriesToMax(state) {
-    var maxLength = state.maxDataSetLength;
-    if (!maxLength || !state.series || !state.series.data) {
+  function trimOldData(state) {
+    var data = state.series.data;
+    if (!data || data.length < 2) {
       return;
     }
 
-    var data = state.series.data;
-    if (data.length > maxLength) {
-      data.splice(0, data.length - maxLength);
-      state.series.resetBounds();
+    var cutoff = Date.now() - state.maxAge;
+    var removeCount = 0;
+    // Keep one point before the cutoff so the line draws in from the left edge.
+    while (removeCount < data.length - 1 && data[removeCount + 1][0] < cutoff) {
+      removeCount++;
+    }
+    if (removeCount > 0) {
+      data.splice(0, removeCount);
     }
   }
 
@@ -153,9 +153,6 @@
 
     var rect = resizeCanvasForDpr(element);
     state.chart.options.millisPerPixel = computeMillisPerPixel(state.secs, rect.width);
-    state.maxDataSetLength = computeMaxDataSetLength(state.secs, state.chart.options.millisPerPixel);
-    state.chart.options.maxDataSetLength = state.maxDataSetLength;
-    trimSeriesToMax(state);
   }
 
   function resizeAllGraphs() {
