@@ -83,8 +83,13 @@
     }
 
     var series = new TimeSeries();
+    var updateRate = parseNumber(element.getAttribute("data-update-rate"));
+    if (!isFinite(updateRate) || updateRate <= 0) {
+      updateRate = 500;
+    }
+
     chart.addTimeSeries(series, { strokeStyle: pencolor, lineWidth: 2 });
-    chart.streamTo(element, 500);
+    chart.streamTo(element, updateRate);
 
     element._smoothieState = {
       chart: chart,
