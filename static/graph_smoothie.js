@@ -1,4 +1,8 @@
 (function () {
+  var allGraphs = [];
+  var renderInterval = null;
+  var RENDER_INTERVAL_MS = 5000;
+
   function parseNumber(value) {
     if (value === null || value === undefined || value === "") {
       return NaN;
@@ -61,6 +65,11 @@
     var rect = resizeCanvasForDpr(element);
     var millisPerPixel = computeMillisPerPixel(secs, rect.width);
 
+    var delay = parseNumber(element.getAttribute("data-update-rate"));
+    if (!isFinite(delay) || delay <= 0) {
+      delay = 500;
+    }
+
     var chart = new SmoothieChart({
       millisPerPixel: millisPerPixel,
       grid: {
@@ -83,20 +92,24 @@
     }
 
     var series = new TimeSeries();
-    var updateRate = parseNumber(element.getAttribute("data-update-rate"));
-    if (!isFinite(updateRate) || updateRate <= 0) {
-      updateRate = 500;
-    }
 
     chart.addTimeSeries(series, { strokeStyle: pencolor, lineWidth: 2 });
-    chart.streamTo(element, updateRate);
+
+    // Set up the chart for manual rendering instead of continuous requestAnimationFrame.
+    chart.canvas = element;
+    chart.clientWidth = parseInt(element.getAttribute('width')) || rect.width;
+    chart.clientHeight = parseInt(element.getAttribute('height')) || rect.height;
+    chart.delay = delay;
 
     element._smoothieState = {
       chart: chart,
       series: series,
       secs: secs,
-      maxAge: computeMaxAge(secs)
+      maxAge: computeMaxAge(secs),
+      dirty: true
     };
+
+    allGraphs.push(element);
 
     var initialValue = parseFloat(element.textContent);
     if (isFinite(initialValue)) {
@@ -116,6 +129,7 @@
     }
 
     state.series.append(Date.now(), val);
+    state.dirty = true;
     trimOldData(state);
   }
 
@@ -127,12 +141,33 @@
 
     var cutoff = Date.now() - state.maxAge;
     var removeCount = 0;
-    // Keep one point before the cutoff so the line draws in from the left edge.
     while (removeCount < data.length - 1 && data[removeCount + 1][0] < cutoff) {
       removeCount++;
     }
     if (removeCount > 0) {
       data.splice(0, removeCount);
+    }
+  }
+
+  function renderAll() {
+    for (var i = 0; i < allGraphs.length; i++) {
+      var state = allGraphs[i]._smoothieState;
+      if (state) {
+        state.chart.render();
+      }
+    }
+  }
+
+  function startRendering() {
+    if (renderInterval) return;
+    renderAll();
+    renderInterval = setInterval(renderAll, RENDER_INTERVAL_MS);
+  }
+
+  function stopRendering() {
+    if (renderInterval) {
+      clearInterval(renderInterval);
+      renderInterval = null;
     }
   }
 
@@ -158,19 +193,32 @@
 
     var rect = resizeCanvasForDpr(element);
     state.chart.options.millisPerPixel = computeMillisPerPixel(state.secs, rect.width);
+    state.chart.clientWidth = parseInt(element.getAttribute('width')) || rect.width;
+    state.chart.clientHeight = parseInt(element.getAttribute('height')) || rect.height;
   }
 
   function resizeAllGraphs() {
     var elements = document.getElementsByClassName("graph");
     Array.prototype.forEach.call(elements, resizeGraph);
+    renderAll();
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     var elements = document.getElementsByClassName("graph");
     Array.prototype.forEach.call(elements, watchGraph);
+    startRendering();
   });
 
   window.addEventListener("resize", function () {
     resizeAllGraphs();
+  });
+
+  // Pause rendering when the page is not visible to save CPU.
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      stopRendering();
+    } else {
+      startRendering();
+    }
   });
 })();
